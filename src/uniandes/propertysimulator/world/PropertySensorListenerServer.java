@@ -153,7 +153,7 @@ public class PropertySensorListenerServer implements IStoppable
 		{
 			//String message = "{propertyId:" + propertyId2+propertyId1 + ",sensorMessage:" + line.trim() +"}";
 			//System.out.println(message);
-			Socket socket = new Socket(centralIP, centralListeningPort);
+			Socket socket = new Socket(centralIP, centralListeningPort); 
 			OutputStream outputStream = socket.getOutputStream();
 			outputStream.write(line.getBytes()); //
 			
