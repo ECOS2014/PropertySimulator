@@ -7,7 +7,10 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 
@@ -18,8 +21,7 @@ public class PropertySensorListenerServer implements IStoppable
 	private static final String KEY_CENTRAL_IP = "centralIP";
 	private static final String KEY_CENTRAL_LISTENING_PORT = "centralPort";
 	
-	private int propertyId1;
-	private int propertyId2;
+	private int propertyId;
 	private String centralIP;
 	private int centralListeningPort;
 	private ServerSocket server = null;
@@ -28,13 +30,11 @@ public class PropertySensorListenerServer implements IStoppable
 	int SystemActive; //C
 	int TypeNotification; //f(A,B,C)
 	private byte[] defaultBufferReader;
-	private byte[] frameHouse;
+
 	
 	public PropertySensorListenerServer() 
 	{
-		//propertyId = getRandomId();
-		/*propertyId1 = (int) (Math.random()*127);
-		propertyId2 = (int) (Math.random()*127);*/
+		
 		defaultBufferReader = new byte[512];
 		Thread shutdownMonitor = new Thread(new ShutDownMonitor(this));
 		shutdownMonitor.setDaemon(true);
@@ -43,8 +43,7 @@ public class PropertySensorListenerServer implements IStoppable
 		try 
 		{
 			Properties configProperties = loadProperties();
-			propertyId1 =  Integer.parseInt(configProperties.getProperty("houseId1"));
-			propertyId2 =Integer.parseInt(configProperties.getProperty("houseId2"));
+			propertyId =  Integer.parseInt(configProperties.getProperty("houseId1"));
 			initServerSocket(configProperties);
 			initCentralInfo(configProperties);
 			startListening();
@@ -78,7 +77,6 @@ public class PropertySensorListenerServer implements IStoppable
 		String strPortNumber = configProperties.getProperty(KEY_LISTENING_PORT);
 		int portNumber = Integer.parseInt(strPortNumber);
 		server = new ServerSocket(portNumber);
-		System.out.println("Property id: " + propertyId2+propertyId1);
 		System.out.println("Server started");
 		System.out.println("Hit Enter to stop the server");
 	}
@@ -92,6 +90,9 @@ public class PropertySensorListenerServer implements IStoppable
 
 	private void startListening() throws IOException 
 	{
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+		Date currentDate;
+		String date;
 		try
 		{
 			while (true)
@@ -100,10 +101,6 @@ public class PropertySensorListenerServer implements IStoppable
 				Socket socketObject = server.accept();
 				InputStream reader = socketObject.getInputStream();
 				reader.read(defaultBufferReader);
-				//TODO:Cambiar, enviar los bytes
-				//frameHouse=new byte[4];
-				
-				//frameHouse[1] = defaultBufferReader[1]; //sensorId
 				
 				byte statusSensor=defaultBufferReader[0];
 				
@@ -117,14 +114,18 @@ public class PropertySensorListenerServer implements IStoppable
 					TypeNotification=1;
 				}
 				
-				//frameHouse[0]=(byte)((Status*8)+(SensorType*4)+(SystemActive*2)+(TypeNotification));
-				//frameHouse[2]=(byte) propertyId1;
-				//frameHouse[3]=(byte) propertyId2;
+
+				currentDate = new Date();
+				date= df.format(currentDate);
 				
-				System.out.println("out byte "+propertyId1+";"+defaultBufferReader[1]+";"+Status+";"+SensorType+";"+SystemActive+";"+TypeNotification);
+				System.out.println("out byte "+propertyId+";"+defaultBufferReader[1]+";"+Status+";"+SensorType+";"+SystemActive+";"+TypeNotification);
 				//casa;sensor;status;typesensor;systemActive;typeNotification
-				String line = new String((propertyId1+";"+defaultBufferReader[1]+";"+Status+";"+SensorType+";"+SystemActive+";"+TypeNotification).trim());
-				//System.out.println("Reading: " + line.trim());
+				String line = new String((propertyId+";"+defaultBufferReader[1]+";"+Status+";"+SensorType+";"+SystemActive+";"+TypeNotification+";"+date).trim());
+				
+				
+				
+				System.out.println("Se generó una notificación Hora: "+date+" propiedad: "+propertyId +" sensor: "+defaultBufferReader[1]);
+				
 				SendServerNotification(line);
 			}
 		}
@@ -150,7 +151,7 @@ public class PropertySensorListenerServer implements IStoppable
 		} 
 		catch (Exception e) 
 		{
-			System.out.println("Property " + propertyId2+propertyId1 + " Couldn\'t find central server at " + centralIP + ":" + centralListeningPort);
+			System.out.println("Property " + propertyId + " Couldn\'t find central server at " + centralIP + ":" + centralListeningPort);
 		}
 	}
 
