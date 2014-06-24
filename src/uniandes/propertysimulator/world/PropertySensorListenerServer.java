@@ -55,19 +55,6 @@ public class PropertySensorListenerServer implements IStoppable
 		}
 	}
 
-	private String getRandomId() 
-	{
-		int idLength = 10;
-		
-		String stringId = new String();
-		Random random = new Random();
-		for (int i = 0; i < idLength; i++)
-		{
-			stringId += ("" + random.nextInt(10));
-		}		
-		
-		return stringId;
-	}
 
 	private Properties loadProperties() 
 	{
@@ -109,6 +96,7 @@ public class PropertySensorListenerServer implements IStoppable
 		{
 			while (true)
 			{
+				Random random = new Random();
 				Socket socketObject = server.accept();
 				InputStream reader = socketObject.getInputStream();
 				reader.read(defaultBufferReader);
@@ -122,8 +110,8 @@ public class PropertySensorListenerServer implements IStoppable
 				System.out.println("in byte "+statusSensor+" "+defaultBufferReader[1]);
 				
 				SensorType = statusSensor%2; //B
-				Status = statusSensor/2; //A
-				SystemActive = (int)(Math.random()*2); //C
+				Status = (statusSensor/2)%2; //A
+				SystemActive =random.nextInt(2); //C
 				TypeNotification=0;
 				if((SensorType==1 || SystemActive==1) && (Status==1)){
 					TypeNotification=1;
