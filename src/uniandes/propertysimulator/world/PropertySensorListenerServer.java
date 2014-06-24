@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.Random;
 
@@ -112,13 +113,13 @@ public class PropertySensorListenerServer implements IStoppable
 				InputStream reader = socketObject.getInputStream();
 				reader.read(defaultBufferReader);
 				//TODO:Cambiar, enviar los bytes
-				frameHouse=new byte[4];
+				//frameHouse=new byte[4];
 				
-				frameHouse[1] = defaultBufferReader[1]; //sensorId
+				//frameHouse[1] = defaultBufferReader[1]; //sensorId
 				
 				byte statusSensor=defaultBufferReader[0];
 				
-				System.out.println("in byte "+statusSensor+" "+frameHouse[1]);
+				System.out.println("in byte "+statusSensor+" "+defaultBufferReader[1]);
 				
 				SensorType = statusSensor%2; //B
 				Status = statusSensor/2; //A
@@ -128,14 +129,15 @@ public class PropertySensorListenerServer implements IStoppable
 					TypeNotification=1;
 				}
 				
-				frameHouse[0]=(byte)((Status*8)+(SensorType*4)+(SystemActive*2)+(TypeNotification));
-				frameHouse[2]=(byte) propertyId1;
-				frameHouse[3]=(byte) propertyId2;
+				//frameHouse[0]=(byte)((Status*8)+(SensorType*4)+(SystemActive*2)+(TypeNotification));
+				//frameHouse[2]=(byte) propertyId1;
+				//frameHouse[3]=(byte) propertyId2;
 				
-				System.out.println("out byte "+frameHouse[3]+" "+frameHouse[2]+" "+frameHouse[1]+" "+frameHouse[0]);
-				String line = new String(frameHouse);
+				System.out.println("out byte "+propertyId1+";"+defaultBufferReader[1]+";"+Status+";"+SensorType+";"+SystemActive+";"+TypeNotification);
+				//casa;sensor;status;typesensor;systemActive;typeNotification
+				String line = new String((propertyId1+";"+defaultBufferReader[1]+";"+Status+";"+SensorType+";"+SystemActive+";"+TypeNotification).trim());
 				//System.out.println("Reading: " + line.trim());
-				SendServerNotification(frameHouse);
+				SendServerNotification(line);
 			}
 		}
 		catch (SocketException se)
@@ -145,7 +147,7 @@ public class PropertySensorListenerServer implements IStoppable
 		}		
 	}
 
-	private void SendServerNotification(byte[] line) 
+	private void SendServerNotification(String line) 
 	{
 		try 
 		{
@@ -153,13 +155,14 @@ public class PropertySensorListenerServer implements IStoppable
 			//System.out.println(message);
 			Socket socket = new Socket(centralIP, centralListeningPort);
 			OutputStream outputStream = socket.getOutputStream();
-			outputStream.write(line); //
+			outputStream.write(line.getBytes()); //
+			
 			outputStream.close();
 			socket.close();
 		} 
 		catch (Exception e) 
 		{
-			System.out.println("Property " + propertyId2+propertyId1 + " Couldn\'t find central server at " + centralIP + ":" + centralIP);
+			System.out.println("Property " + propertyId2+propertyId1 + " Couldn\'t find central server at " + centralIP + ":" + centralListeningPort);
 		}
 	}
 
