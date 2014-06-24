@@ -17,15 +17,23 @@ public class PropertySensorListenerServer implements IStoppable
 	private static final String KEY_CENTRAL_IP = "centralIP";
 	private static final String KEY_CENTRAL_LISTENING_PORT = "centralPort";
 	
-	private String propertyId;
+	private int propertyId1;
+	private int propertyId2;
 	private String centralIP;
 	private int centralListeningPort;
 	private ServerSocket server = null;
+	int SensorType; //B
+	int Status; //A
+	int SystemActive; //C
+	int TypeNotification; //f(A,B,C)
 	private byte[] defaultBufferReader;
+	private byte[] frameHouse;
 	
 	public PropertySensorListenerServer() 
 	{
-		propertyId = getRandomId();
+		//propertyId = getRandomId();
+		/*propertyId1 = (int) (Math.random()*127);
+		propertyId2 = (int) (Math.random()*127);*/
 		defaultBufferReader = new byte[512];
 		Thread shutdownMonitor = new Thread(new ShutDownMonitor(this));
 		shutdownMonitor.setDaemon(true);
@@ -34,6 +42,8 @@ public class PropertySensorListenerServer implements IStoppable
 		try 
 		{
 			Properties configProperties = loadProperties();
+			propertyId1 =  Integer.parseInt(configProperties.getProperty("houseId1"));
+			propertyId2 =Integer.parseInt(configProperties.getProperty("houseId2"));
 			initServerSocket(configProperties);
 			initCentralInfo(configProperties);
 			startListening();
@@ -80,7 +90,7 @@ public class PropertySensorListenerServer implements IStoppable
 		String strPortNumber = configProperties.getProperty(KEY_LISTENING_PORT);
 		int portNumber = Integer.parseInt(strPortNumber);
 		server = new ServerSocket(portNumber);
-		System.out.println("Property id: " + propertyId);
+		System.out.println("Property id: " + propertyId2+propertyId1);
 		System.out.println("Server started");
 		System.out.println("Hit Enter to stop the server");
 	}
@@ -102,12 +112,30 @@ public class PropertySensorListenerServer implements IStoppable
 				InputStream reader = socketObject.getInputStream();
 				reader.read(defaultBufferReader);
 				//TODO:Cambiar, enviar los bytes
+				frameHouse=new byte[4];
 				
+				frameHouse[1] = defaultBufferReader[1]; //sensorId
 				
+				byte statusSensor=defaultBufferReader[0];
 				
-				String line = new String(defaultBufferReader);
-				System.out.println("Reading: " + line.trim());
-				SendServerNotification(line);
+				System.out.println("in byte "+statusSensor+" "+frameHouse[1]);
+				
+				SensorType = statusSensor%2; //B
+				Status = statusSensor/2; //A
+				SystemActive = (int)(Math.random()*2); //C
+				TypeNotification=0;
+				if((SensorType==1 || SystemActive==1) && (Status==1)){
+					TypeNotification=1;
+				}
+				
+				frameHouse[0]=(byte)((Status*8)+(SensorType*4)+(SystemActive*2)+(TypeNotification));
+				frameHouse[2]=(byte) propertyId1;
+				frameHouse[3]=(byte) propertyId2;
+				
+				System.out.println("out byte "+frameHouse[3]+" "+frameHouse[2]+" "+frameHouse[1]+" "+frameHouse[0]);
+				String line = new String(frameHouse);
+				//System.out.println("Reading: " + line.trim());
+				SendServerNotification(frameHouse);
 			}
 		}
 		catch (SocketException se)
@@ -117,21 +145,21 @@ public class PropertySensorListenerServer implements IStoppable
 		}		
 	}
 
-	private void SendServerNotification(String line) 
+	private void SendServerNotification(byte[] line) 
 	{
 		try 
 		{
-			String message = "{propertyId:" + propertyId + ",sensorMessage:" + line.trim() +"}";
-			System.out.println(message);
+			//String message = "{propertyId:" + propertyId2+propertyId1 + ",sensorMessage:" + line.trim() +"}";
+			//System.out.println(message);
 			Socket socket = new Socket(centralIP, centralListeningPort);
 			OutputStream outputStream = socket.getOutputStream();
-			outputStream.write(message.getBytes());
+			outputStream.write(line); //
 			outputStream.close();
 			socket.close();
 		} 
 		catch (Exception e) 
 		{
-			System.out.println("Property " + propertyId + " Couldn\'t find central server at " + centralIP + ":" + centralIP);
+			System.out.println("Property " + propertyId2+propertyId1 + " Couldn\'t find central server at " + centralIP + ":" + centralIP);
 		}
 	}
 
