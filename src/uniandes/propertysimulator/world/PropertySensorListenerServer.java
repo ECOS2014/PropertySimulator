@@ -134,6 +134,7 @@ public class PropertySensorListenerServer implements IStoppable
 	{
 		Date dateEnd;
 		long milliseconds;
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 		try 
 		{
 			Socket socket = new Socket(centralIP, centralListeningPort); 
@@ -141,7 +142,8 @@ public class PropertySensorListenerServer implements IStoppable
 			//se concantena los milisegundos invertidos en la casa
 			dateEnd = new Date();
 			milliseconds = dateEnd.getTime() - startDate.getTime();
-			line+= ";"+milliseconds;	
+			
+			line+= ";"+milliseconds+";"+df.format(startDate)+";"+df.format(dateEnd);	
 			outputStream.write(line.getBytes()); 
 			
 			outputStream.close();
