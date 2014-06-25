@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
@@ -26,11 +25,11 @@ public class PropertySensorListenerServer implements IStoppable
 	private int centralListeningPort;
 	private ServerSocket server = null;
 	int sensorType; //B
-	int Status; //A
-	int SystemActive; //C
-	int TypeNotification; //f(A,B,C)
+	int status; //A
+	int systemActive; //C
+	int typeNotification; //f(A,B,C)
 	private byte[] defaultBufferReader;
-	private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+	
 	
 	public PropertySensorListenerServer() 
 	{
@@ -102,29 +101,26 @@ public class PropertySensorListenerServer implements IStoppable
 				InputStream reader = socketObject.getInputStream();
 				reader.read(defaultBufferReader);
 				currentDate = new Date();
+				DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 				
-				date= ""+currentDate.getTime();
-				
+				date= df.format(currentDate);
 				
 				byte statusSensor=defaultBufferReader[0];
 				
-				System.out.println("in byte "+statusSensor+" "+defaultBufferReader[1]);
-				
 				sensorType = statusSensor%2; //B
-				Status = (statusSensor/2)%2; //A
-				SystemActive =random.nextInt(2); //C
-				TypeNotification=0;
-				if((sensorType==1 || SystemActive==1) && (Status==1)){
-					TypeNotification=1;
+				status = (statusSensor/2)%2; //A
+				systemActive =random.nextInt(2); //C
+				typeNotification=0;
+				if((sensorType==1 || systemActive==1) && (status==1)){
+					typeNotification=1;
 				}
 				
-				System.out.println("out byte "+propertyId+";"+defaultBufferReader[1]+";"+Status+";"+sensorType+";"+SystemActive+";"+TypeNotification);
-				//casa;sensor;status;typesensor;systemActive;typeNotification;fecha inicio
-				String line = new String((propertyId+";"+defaultBufferReader[1]+";"+Status+";"+sensorType+";"+SystemActive+";"+TypeNotification+";"+date).trim());
+				//casa;sensor;status;typesensor;systemActive;typeNotification;milisengundo invertidos en la casa
+				String line = new String((propertyId+";"+defaultBufferReader[1]+";"+status+";"+sensorType+";"+systemActive+";"+typeNotification).trim());
 				
 				System.out.println("Se generó una notificación Hora: "+date+" propiedad: "+propertyId +" sensor: "+defaultBufferReader[1]);
 				
-				SendServerNotification(line);
+				SendServerNotification(line,currentDate);
 			}
 		}
 		catch (SocketException se)
@@ -134,20 +130,23 @@ public class PropertySensorListenerServer implements IStoppable
 		}		
 	}
 
-	private void SendServerNotification(String line) 
+	private void SendServerNotification(String line, Date startDate) 
 	{
 		Date dateEnd;
+		long milliseconds;
 		try 
 		{
 			Socket socket = new Socket(centralIP, centralListeningPort); 
 			OutputStream outputStream = socket.getOutputStream();
-			//se concantena fecha fin de procesamiento en la casa
+			//se concantena los milisegundos invertidos en la casa
 			dateEnd = new Date();
-			line+= ";"+dateEnd.getTime();	
+			milliseconds = dateEnd.getTime() - startDate.getTime();
+			line+= ";"+milliseconds;	
 			outputStream.write(line.getBytes()); 
 			
 			outputStream.close();
 			socket.close();
+			
 		} 
 		catch (Exception e) 
 		{
