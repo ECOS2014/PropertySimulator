@@ -2,12 +2,16 @@ package uniandes.propertysimulator.world;
 
 import javax.swing.JFrame;
 
+import uniandes.propertysimulator.processor.ManagerNotificationThreads;
+
 public class PropertySimulator extends JFrame 
 {
 	private static final long serialVersionUID = 1L;
 
 	public static void main(String[] args)
 	{
+		Thread managerNotification = new Thread(new ManagerNotificationThreads());
+		managerNotification.start();
 		PropertySimulator ps = new PropertySimulator();
 		ps.setSize(800, 100);
 		ps.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -34,6 +38,7 @@ public class PropertySimulator extends JFrame
 		else
 		{
 			ps.setTitle("Property no args were found");
+			ps.setVisible(false);
 			new PropertySensorListenerServer();
 		}
 	}	

@@ -13,6 +13,8 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 
+import uniandes.propertysimulator.entities.Notification;
+
 public class PropertySensorListenerServer implements IStoppable
 {
 	private static final String CONFIG_FILE_PATH = "./data/config.properties";
@@ -36,7 +38,7 @@ public class PropertySensorListenerServer implements IStoppable
 		defaultBufferReader = new byte[512];
 		
 		// 5 minutos 300000
-		Thread timeOutShutdown = new Thread(new TimeOutShutDown(this, 10000));
+		Thread timeOutShutdown = new Thread(new TimeOutShutDown(this, 600000));
 		timeOutShutdown.setDaemon(true);
 		timeOutShutdown.start();
 		
@@ -156,9 +158,8 @@ public class PropertySensorListenerServer implements IStoppable
 				//casa;sensor;status;typesensor;systemActive;typeNotification;milisengundo invertidos en la casa
 				String line = new String((propertyId+";"+defaultBufferReader[1]+";"+status+";"+sensorType+";"+systemActive+";"+typeNotification).trim());
 				
-				System.out.println("Se generó una notificación Hora: "+date+" propiedad: "+propertyId +" sensor: "+defaultBufferReader[1]);
 				
-				SendServerNotification(line,currentDate);
+				QueueNotifications.getInstance().putEvent(new Notification(propertyId, line, currentDate, centralListeningPort, centralIP));
 			}
 		}
 		catch (SocketException se)
@@ -166,32 +167,6 @@ public class PropertySensorListenerServer implements IStoppable
 			System.out.println("Server is down");
 			//se.printStackTrace();
 		}		
-	}
-
-	private void SendServerNotification(String line, Date startDate) 
-	{
-		Date dateEnd;
-		long milliseconds;
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
-		try 
-		{
-			Socket socket = new Socket(centralIP, centralListeningPort); 
-			OutputStream outputStream = socket.getOutputStream();
-			//se concantena los milisegundos invertidos en la casa
-			dateEnd = new Date();
-			milliseconds = dateEnd.getTime() - startDate.getTime();
-			
-			line+= ";"+milliseconds+";"+df.format(startDate)+";"+df.format(dateEnd);	
-			outputStream.write(line.getBytes()); 
-			
-			outputStream.close();
-			socket.close();
-			
-		} 
-		catch (Exception e) 
-		{
-			System.out.println("Property " + propertyId + " Couldn\'t find central server at " + centralIP + ":" + centralListeningPort);
-		}
 	}
 
 	@Override
