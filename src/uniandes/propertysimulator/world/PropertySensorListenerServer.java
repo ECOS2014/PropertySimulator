@@ -157,7 +157,9 @@ public class PropertySensorListenerServer implements IStoppable
 				
 				//casa;sensor;status;typesensor;systemActive;typeNotification;milisengundo invertidos en la casa
 				String line = new String((propertyId+";"+defaultBufferReader[1]+";"+status+";"+sensorType+";"+systemActive+";"+typeNotification).trim());
-				
+			
+				//System.out.println("Se generó una notificación Hora: "+date+" propiedad: "+propertyId +" sensor: "+defaultBufferReader[1]);
+
 				
 				QueueNotifications.getInstance().putEvent(new Notification(propertyId, line, currentDate, centralListeningPort, centralIP));
 			}
