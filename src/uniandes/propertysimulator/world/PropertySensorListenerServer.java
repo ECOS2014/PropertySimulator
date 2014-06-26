@@ -29,12 +29,17 @@ public class PropertySensorListenerServer implements IStoppable
 	int systemActive; //C
 	int typeNotification; //f(A,B,C)
 	private byte[] defaultBufferReader;
-	
+	boolean isListening;
 	
 	public PropertySensorListenerServer() 
-	{
-		
+	{		
 		defaultBufferReader = new byte[512];
+		
+		// 5 minutos 300000
+		Thread timeOutShutdown = new Thread(new TimeOutShutDown(this, 10000));
+		timeOutShutdown.setDaemon(true);
+		timeOutShutdown.start();
+		
 		Thread shutdownMonitor = new Thread(new ShutDownMonitor(this));
 		shutdownMonitor.setDaemon(true);
 		shutdownMonitor.start();
@@ -53,12 +58,16 @@ public class PropertySensorListenerServer implements IStoppable
 		}
 	}
 
-	public PropertySensorListenerServer(int propertyId2, String centralIP2,	int centralPort, int listeningPort) 
+	public PropertySensorListenerServer(int propertyId2, String centralIP2,	int centralPort, int listeningPort, long timeout) 
 	{
 		defaultBufferReader = new byte[512];
 		Thread shutdownMonitor = new Thread(new ShutDownMonitor(this));
 		shutdownMonitor.setDaemon(true);
 		shutdownMonitor.start();
+		
+		Thread timeOutShutdown = new Thread(new TimeOutShutDown(this, timeout));
+		timeOutShutdown.setDaemon(true);
+		timeOutShutdown.start();
 		
 		try
 		{
@@ -72,7 +81,6 @@ public class PropertySensorListenerServer implements IStoppable
 			e.printStackTrace();
 		}
 	}
-
 
 	private Properties loadProperties() 
 	{
@@ -101,6 +109,7 @@ public class PropertySensorListenerServer implements IStoppable
 	private void initServerSocket(int listeningPort) throws IOException 
 	{
 		server = new ServerSocket(listeningPort);
+		isListening = true;
 		System.out.println("Server started");
 		System.out.println("Hit Enter to stop the server");
 	}
@@ -119,14 +128,13 @@ public class PropertySensorListenerServer implements IStoppable
 	
 	private void startListening() throws IOException 
 	{
-		
 		Date currentDate;
 		String date;
 		try
 		{
-			while (true)
+			while (isListening)
 			{
-				Random random = new Random();
+				Random random = new Random();	
 				Socket socketObject = server.accept();
 				InputStream reader = socketObject.getInputStream();
 				reader.read(defaultBufferReader);
@@ -156,7 +164,7 @@ public class PropertySensorListenerServer implements IStoppable
 		catch (SocketException se)
 		{
 			System.out.println("Server is down");
-			se.printStackTrace();
+			//se.printStackTrace();
 		}		
 	}
 
@@ -191,6 +199,7 @@ public class PropertySensorListenerServer implements IStoppable
 	{
 		try
 		{
+			isListening = false;
 			System.out.println("Closing");
 			server.close();
 		}

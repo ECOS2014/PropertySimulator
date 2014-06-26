@@ -12,7 +12,7 @@ public class PropertySimulator extends JFrame
 		ps.setSize(800, 100);
 		ps.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		ps.setVisible(true);		
-		if (args.length == 4)
+		if (args.length == 5)
 		{
 			String strPropertyId = args[0];
 			int propertyId = Integer.parseInt(strPropertyId);
@@ -24,9 +24,12 @@ public class PropertySimulator extends JFrame
 			
 			String strListeningPort = args[3];
 			int listeningPort = Integer.parseInt(strListeningPort);
-						
-			ps.setTitle("{propertyId:" + propertyId + ", centralIP:" + centralIP + ", centralPort:" + centralPort + ", listeningPort:" + listeningPort + "}");
-			new PropertySensorListenerServer(propertyId, centralIP, centralPort, listeningPort);
+			
+			String strTimeout = args[4];
+			long timeout = Long.parseLong(strTimeout);
+			
+			ps.setTitle("{propertyId:" + propertyId + ", centralIP:" + centralIP + ", centralPort:" + centralPort + ", listeningPort:" + listeningPort + ", timeout:" + timeout + "}");
+			new PropertySensorListenerServer(propertyId, centralIP, centralPort, listeningPort, timeout);
 		}
 		else
 		{
