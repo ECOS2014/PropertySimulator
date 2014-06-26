@@ -53,6 +53,26 @@ public class PropertySensorListenerServer implements IStoppable
 		}
 	}
 
+	public PropertySensorListenerServer(int propertyId2, String centralIP2,	int centralPort, int listeningPort) 
+	{
+		defaultBufferReader = new byte[512];
+		Thread shutdownMonitor = new Thread(new ShutDownMonitor(this));
+		shutdownMonitor.setDaemon(true);
+		shutdownMonitor.start();
+		
+		try
+		{
+			propertyId = propertyId2;
+			initServerSocket(listeningPort);
+			initCentralInfo(centralIP2,centralPort);
+			startListening();
+		} 
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+	}
+
 
 	private Properties loadProperties() 
 	{
@@ -75,18 +95,28 @@ public class PropertySensorListenerServer implements IStoppable
 	{
 		String strPortNumber = configProperties.getProperty(KEY_LISTENING_PORT);
 		int portNumber = Integer.parseInt(strPortNumber);
-		server = new ServerSocket(portNumber);
+		initServerSocket(portNumber);
+	}
+	
+	private void initServerSocket(int listeningPort) throws IOException 
+	{
+		server = new ServerSocket(listeningPort);
 		System.out.println("Server started");
 		System.out.println("Hit Enter to stop the server");
 	}
 	
 	private void initCentralInfo(Properties configProperties) 
 	{
-		centralIP = configProperties.getProperty(KEY_CENTRAL_IP); 
 		String strCentralListeningPort = configProperties.getProperty(KEY_CENTRAL_LISTENING_PORT);
-		centralListeningPort = Integer.parseInt(strCentralListeningPort);
+		initCentralInfo(configProperties.getProperty(KEY_CENTRAL_IP), Integer.parseInt(strCentralListeningPort));
 	}
 
+	private void initCentralInfo(String centralIP, int centralListeningPort) 
+	{
+		this.centralIP = centralIP; 
+		this.centralListeningPort = centralListeningPort;
+	}
+	
 	private void startListening() throws IOException 
 	{
 		
