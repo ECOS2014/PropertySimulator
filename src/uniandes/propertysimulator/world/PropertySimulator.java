@@ -1,8 +1,6 @@
 package uniandes.propertysimulator.world;
-
 import javax.swing.JFrame;
 
-import uniandes.propertysimulator.processor.ManagerNotificationThreads;
 
 public class PropertySimulator extends JFrame 
 {
@@ -10,8 +8,6 @@ public class PropertySimulator extends JFrame
 
 	public static void main(String[] args)
 	{
-		Thread managerNotification = new Thread(new ManagerNotificationThreads());
-		managerNotification.start();
 		PropertySimulator ps = new PropertySimulator();
 		ps.setSize(800, 100);
 		ps.setDefaultCloseOperation(EXIT_ON_CLOSE);
