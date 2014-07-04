@@ -2,16 +2,10 @@ package uniandes.propertysimulator.world;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Properties;
-import java.util.Random;
 
 public class PropertySensorListenerServer implements IStoppable
 {
@@ -28,13 +22,11 @@ public class PropertySensorListenerServer implements IStoppable
 	int status; //A
 	int systemActive; //C
 	int typeNotification; //f(A,B,C)
-	private byte[] defaultBufferReader;
+
 	boolean isListening;
 	
 	public PropertySensorListenerServer() 
 	{		
-		defaultBufferReader = new byte[512];
-		
 		// 5 minutos 300000
 		Thread timeOutShutdown = new Thread(new TimeOutShutDown(this, 600000));
 		timeOutShutdown.setDaemon(true);
@@ -60,7 +52,6 @@ public class PropertySensorListenerServer implements IStoppable
 
 	public PropertySensorListenerServer(int propertyId2, String centralIP2,	int centralPort, int listeningPort, long timeout) 
 	{
-		defaultBufferReader = new byte[512];
 		Thread shutdownMonitor = new Thread(new ShutDownMonitor(this));
 		shutdownMonitor.setDaemon(true);
 		shutdownMonitor.start();
@@ -128,37 +119,13 @@ public class PropertySensorListenerServer implements IStoppable
 	
 	private void startListening() throws IOException 
 	{
-		Date currentDate;
-		String date;
 		try
 		{
 			while (isListening)
 			{
-				Random random = new Random();	
-				Socket socketObject = server.accept();
-				InputStream reader = socketObject.getInputStream();
-				reader.read(defaultBufferReader);
-				currentDate = new Date();
-				DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
-				
-				date= df.format(currentDate);
-				
-				byte statusSensor=defaultBufferReader[0];
-				
-				sensorType = statusSensor%2; //B
-				status = (statusSensor/2)%2; //A
-				systemActive =random.nextInt(2); //C
-				typeNotification=0;
-				if((sensorType==1 || systemActive==1) && (status==1)){
-					typeNotification=1;
-				}
-				
-				//casa;sensor;status;typesensor;systemActive;typeNotification;milisengundo invertidos en la casa
-				String line = new String((propertyId+";"+defaultBufferReader[1]+";"+status+";"+sensorType+";"+systemActive+";"+typeNotification).trim());
-			
-				//System.out.println("Se generó una notificación Hora: "+date+" propiedad: "+propertyId +" sensor: "+defaultBufferReader[1]);
-
-				SendServerNotification(line,currentDate);
+				Socket sensorSocket = server.accept();
+				Thread propertySensorListenerThread = new Thread(new PropertySensorListenerThread(sensorSocket, propertyId, centralIP, centralListeningPort));
+				propertySensorListenerThread.start();
 			}
 		}
 		catch (SocketException se)
@@ -168,32 +135,6 @@ public class PropertySensorListenerServer implements IStoppable
 		}		
 	}
 	
-	private void SendServerNotification(String line, Date startDate) 
-	 	{
-	 		Date dateEnd;
-			long milliseconds;
-	 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
-	 		try 
-	 		{
-	 			Socket socket = new Socket(centralIP, centralListeningPort); 
-	 			OutputStream outputStream = socket.getOutputStream();
-	 			//se concantena los milisegundos invertidos en la casa
-	 			dateEnd = new Date();
-	 			milliseconds = dateEnd.getTime() - startDate.getTime();
-	 			
-	 			line+= ";"+milliseconds+";"+df.format(startDate)+";"+df.format(dateEnd);	
-	 			outputStream.write(line.getBytes()); 
-	 			
-	 			outputStream.close();
-	 			socket.close();
-	 			
-	 		} 
-	 		catch (Exception e) 
-	 		{
-	 			System.out.println("Property " + propertyId + " Couldn\'t find central server at " + centralIP + ":" + centralListeningPort);
-	 		}
-	 	}
-
 	@Override
 	public void shutdown() 
 	{

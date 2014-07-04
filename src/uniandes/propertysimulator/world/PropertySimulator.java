@@ -34,7 +34,6 @@ public class PropertySimulator extends JFrame
 		else
 		{
 			ps.setTitle("Property no args were found");
-			ps.setVisible(false);
 			new PropertySensorListenerServer();
 		}
 	}	
