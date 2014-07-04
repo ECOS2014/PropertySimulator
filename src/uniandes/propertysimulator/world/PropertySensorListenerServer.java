@@ -28,9 +28,9 @@ public class PropertySensorListenerServer implements IStoppable
 	public PropertySensorListenerServer() 
 	{		
 		// 5 minutos 300000
-		Thread timeOutShutdown = new Thread(new TimeOutShutDown(this, 600000));
-		timeOutShutdown.setDaemon(true);
-		timeOutShutdown.start();
+		//Thread timeOutShutdown = new Thread(new TimeOutShutDown(this, 600000));
+		//timeOutShutdown.setDaemon(true);
+		//timeOutShutdown.start();
 		
 		Thread shutdownMonitor = new Thread(new ShutDownMonitor(this));
 		shutdownMonitor.setDaemon(true);

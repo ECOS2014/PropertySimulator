@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,16 +20,32 @@ public class PropertySensorListenerThread implements Runnable
 	private int propertyId;
 	private String centralIP;
 	private int centralListeningPort;
-	//private Socket socket = new Socket(centralIP, centralListeningPort); 
-	//private OutputStream outputStream = socket.getOutputStream();
+	private Socket propertyHouseSocket; 
+	private OutputStream propertyOutputStream;
 	
 	public PropertySensorListenerThread(Socket sensorSocket, int propertyId, String centralIP, int centralListeningPort)
 	{
 		System.out.println("New socket");
+		
 		this.sensorSocket = sensorSocket;
 		this.propertyId = propertyId;
 		this.centralIP = centralIP;
 		this.centralListeningPort = centralListeningPort;
+		
+		try 
+		{
+			propertyHouseSocket = new Socket(centralIP, centralListeningPort);
+			propertyOutputStream = propertyHouseSocket.getOutputStream();
+		} 
+		catch (UnknownHostException e1) 
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} 
+		
 		sensorListenerBuffer = new byte[DEFAULT_BUFFER_SIZE];
 		try 
 		{
@@ -76,18 +93,18 @@ public class PropertySensorListenerThread implements Runnable
  		DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
  		try 
  		{
- 			Socket socket = new Socket(centralIP, centralListeningPort); 
- 			OutputStream outputStream = socket.getOutputStream();
+ 			//Socket socket = new Socket(centralIP, centralListeningPort); 
+ 			//OutputStream outputStream = socket.getOutputStream();
  			
  			//se concantena los milisegundos invertidos en la casa
  			Date dateEnd = new Date();
  			long milliseconds = dateEnd.getTime() - startDate.getTime();
  			
  			line+= ";"+milliseconds+";"+df.format(startDate)+";"+df.format(dateEnd);	
- 			outputStream.write(line.getBytes()); 
+ 			propertyOutputStream.write(line.getBytes()); 
  			
- 			outputStream.close();
- 			socket.close();
+ 			//propertyOutputStream.close();
+ 			//propertyHouseSocket.close();
  			
  			System.out.println("Se envio una notificacion: "+line);
  		} 
