@@ -5,66 +5,42 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
+import uniandes.propertysimulator.entities.Server;
 
 public class PropertySensorListenerServer implements IStoppable
 {
 	private static final String CONFIG_FILE_PATH = "./data/config.properties";
-	private static final String KEY_LISTENING_PORT = "listeningPort";
-	private static final String KEY_CENTRAL_IP = "centralIP";
-	private static final String KEY_CENTRAL_LISTENING_PORT = "centralPort";
+	private static final String KEY_LISTENING_PORT = "listeningPort"; 
+	private static final String KEY_CENTRAL_LISTENING = "serversCentral";
+	private static final String KEY_HOUSE_ID ="houseId";
 	
 	private int propertyId;
-	private String centralIP;
-	private int centralListeningPort;
 	private ServerSocket server = null;
-	int sensorType; //B
-	int status; //A
-	int systemActive; //C
-	int typeNotification; //f(A,B,C)
-
-	boolean isListening;
+	private boolean isListening;
+	
+	private List<Server> servers; 
 	
 	public PropertySensorListenerServer() 
 	{		
-		// 5 minutos 300000
-		//Thread timeOutShutdown = new Thread(new TimeOutShutDown(this, 600000));
-		//timeOutShutdown.setDaemon(true);
-		//timeOutShutdown.start();
-		
-		Thread shutdownMonitor = new Thread(new ShutDownMonitor(this));
-		shutdownMonitor.setDaemon(true);
-		shutdownMonitor.start();
-		
-		try 
-		{
-			Properties configProperties = loadProperties();
-			propertyId =  Integer.parseInt(configProperties.getProperty("houseId1"));
-			initServerSocket(configProperties);
-			initCentralInfo(configProperties);
-			startListening();
-		} 
-		catch (IOException e) 
-		{
-			e.printStackTrace();
-		}
-	}
 
-	public PropertySensorListenerServer(int propertyId2, String centralIP2,	int centralPort, int listeningPort, long timeout) 
-	{
 		Thread shutdownMonitor = new Thread(new ShutDownMonitor(this));
 		shutdownMonitor.setDaemon(true);
 		shutdownMonitor.start();
 		
+		/*
 		Thread timeOutShutdown = new Thread(new TimeOutShutDown(this, timeout));
 		timeOutShutdown.setDaemon(true);
 		timeOutShutdown.start();
-		
-		try
+		 */
+		try 
 		{
-			propertyId = propertyId2;
-			initServerSocket(listeningPort);
-			initCentralInfo(centralIP2,centralPort);
+			Properties configProperties = loadProperties();
+			propertyId =  Integer.parseInt(configProperties.getProperty(KEY_HOUSE_ID));
+			initServerSocket(configProperties);
+			initCentralInfo(configProperties);
 			startListening();
 		} 
 		catch (IOException e) 
@@ -107,15 +83,20 @@ public class PropertySensorListenerServer implements IStoppable
 	
 	private void initCentralInfo(Properties configProperties) 
 	{
-		String strCentralListeningPort = configProperties.getProperty(KEY_CENTRAL_LISTENING_PORT);
-		initCentralInfo(configProperties.getProperty(KEY_CENTRAL_IP), Integer.parseInt(strCentralListeningPort));
+		//Los servidores que atienden la casa vienen IP1:Puerto1|IP2:Puerto2|..|IPN:PuertoN
+		String infoServersCentral = configProperties.getProperty(KEY_CENTRAL_LISTENING);
+		String[] serversCentral = infoServersCentral.split(";");
+		String[] infoServer;
+		Server server;
+		
+		this.servers = new LinkedList<Server>();
+		for (String serverCentral : serversCentral) {
+			infoServer = serverCentral.split(":");
+			server = new Server(infoServer[0],Integer.parseInt(infoServer[1]));
+			this.servers.add(server);
+		}
 	}
 
-	private void initCentralInfo(String centralIP, int centralListeningPort) 
-	{
-		this.centralIP = centralIP; 
-		this.centralListeningPort = centralListeningPort;
-	}
 	
 	private void startListening() throws IOException 
 	{
@@ -124,7 +105,7 @@ public class PropertySensorListenerServer implements IStoppable
 			while (isListening)
 			{
 				Socket sensorSocket = server.accept();
-				Thread propertySensorListenerThread = new Thread(new PropertySensorListenerThread(sensorSocket, propertyId, centralIP, centralListeningPort));
+				Thread propertySensorListenerThread = new Thread(new PropertySensorListenerThread(sensorSocket, propertyId, this.servers));
 				propertySensorListenerThread.start();
 			}
 		}

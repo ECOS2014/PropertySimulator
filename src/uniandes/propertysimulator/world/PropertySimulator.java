@@ -16,19 +16,15 @@ public class PropertySimulator extends JFrame
 			String strPropertyId = args[0];
 			int propertyId = Integer.parseInt(strPropertyId);
 			
-			String centralIP = args[1];
-			
-			String strCentralPort = args[2];
-			int centralPort = Integer.parseInt(strCentralPort);
-			
+
 			String strListeningPort = args[3];
 			int listeningPort = Integer.parseInt(strListeningPort);
 			
 			String strTimeout = args[4];
 			long timeout = Long.parseLong(strTimeout);
 			
-			ps.setTitle("{propertyId:" + propertyId + ", centralIP:" + centralIP + ", centralPort:" + centralPort + ", listeningPort:" + listeningPort + ", timeout:" + timeout + "}");
-			new PropertySensorListenerServer(propertyId, centralIP, centralPort, listeningPort, timeout);
+			ps.setTitle("{propertyId:" + propertyId + ", listeningPort:" + listeningPort + ", timeout:" + timeout + "}");
+			new PropertySensorListenerServer();
 		}
 		else
 		{
