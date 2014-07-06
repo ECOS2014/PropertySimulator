@@ -1,7 +1,6 @@
 package uniandes.propertysimulator.world;
 import javax.swing.JFrame;
 
-
 public class PropertySimulator extends JFrame 
 {
 	private static final long serialVersionUID = 1L;

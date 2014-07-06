@@ -15,7 +15,7 @@ public class MessageCipher
 	public static final String DEFAULT_KEY = "000000000000000000000000";
 	
 	public static final String DEFAULT_ALGORITHM = "DES";
-	public static final String DEFAULT_ENCODING = "UTF-8";
+	public static final String DEFAULT_ENCODING = "Cp1252";
 	
 	private Cipher cipher;
 	private Cipher decoder;
@@ -32,15 +32,6 @@ public class MessageCipher
 			key = SecretKeyFactory.getInstance(MessageCipher.DEFAULT_ALGORITHM).generateSecret(keySpec);
 			cipher.init(Cipher.ENCRYPT_MODE, key);
 			decoder.init(Cipher.DECRYPT_MODE, key);
-			
-			/*
-			String message = "Prueba de seguridad.";
-			String encryptedMessage = encrypt(message);
-			System.out.println(encryptedMessage);
-			
-			String decryptedMessage = decrypt(encryptedMessage);
-			System.out.println(decryptedMessage);
-			*/
 		}		  
 		catch (InvalidKeyException e) 
 		{
@@ -90,7 +81,8 @@ public class MessageCipher
 		{
 			byte[] encodedMessage = message.getBytes(MessageCipher.DEFAULT_ENCODING);
 			byte[] encryptedBytes = cipher.doFinal(encodedMessage);
-			return new String(encryptedBytes);			
+			
+			return new sun.misc.BASE64Encoder().encode(encryptedBytes);			
 		}
 		catch (Exception e)
 		{
@@ -104,8 +96,11 @@ public class MessageCipher
 	{
 		try
 		{
-			byte[] decryptedBytes = decoder.doFinal(encryptedMessage.getBytes());
+			byte[] decodedBase64Bytes = new sun.misc.BASE64Decoder().decodeBuffer(encryptedMessage);
+			byte[] decryptedBytes = decoder.doFinal(decodedBase64Bytes);
 			String decryptedMessage = new String(decryptedBytes);
+			
+			
 			return decryptedMessage;
 		}
 		catch (Exception e)

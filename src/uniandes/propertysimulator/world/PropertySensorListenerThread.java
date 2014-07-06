@@ -10,6 +10,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
 
+import uniandes.security.MessageCipher;
+
 public class PropertySensorListenerThread implements Runnable
 {
 	private static final int DEFAULT_BUFFER_SIZE = 512;
@@ -100,7 +102,10 @@ public class PropertySensorListenerThread implements Runnable
  			Date dateEnd = new Date();
  			long milliseconds = dateEnd.getTime() - startDate.getTime();
  			
- 			line+= ";"+milliseconds+";"+df.format(startDate)+";"+df.format(dateEnd);	
+ 			line+= ";"+milliseconds+";"+df.format(startDate)+";"+df.format(dateEnd);
+ 			
+ 			MessageCipher ms = new MessageCipher();
+ 			line = ms.encrypt(line);
  			propertyOutputStream.write(line.getBytes()); 
  			
  			//propertyOutputStream.close();
