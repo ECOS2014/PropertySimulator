@@ -100,7 +100,6 @@ public class MessageCipher
 			byte[] decryptedBytes = decoder.doFinal(decodedBase64Bytes);
 			String decryptedMessage = new String(decryptedBytes);
 			
-			
 			return decryptedMessage;
 		}
 		catch (Exception e)
