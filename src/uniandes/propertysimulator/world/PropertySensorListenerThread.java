@@ -85,7 +85,7 @@ public class PropertySensorListenerThread implements Runnable
 			long milliseconds = dateEnd.getTime() - startDate.getTime();
 			modifiedLine = line+";"+milliseconds+";"+df.format(startDate)+";"+df.format(dateEnd);
 			modifiedLine += (";" + getMessageDigest(modifiedLine, df.format(dateEnd)));
-			modifiedLine = ms.encrypt(modifiedLine);
+			modifiedLine = ms.encrypt(modifiedLine) + ";EOF";
 			
 			if(connectionToCentral == null || (connectionToCentral != null && connectionToCentral.isClosed()))
 				connectionToCentral = getConnection();
