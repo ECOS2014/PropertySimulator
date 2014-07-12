@@ -24,7 +24,7 @@ public class PropertySensorListenerThread implements Runnable
 	private int propertyId;
 	private List<Server> servers;
 	private int principalServer=0;
-
+	private Socket connectionToCentral;
 	private String keyDate;
 
 	public PropertySensorListenerThread(Socket sensorSocket, int propertyId, List<Server> servers)
@@ -33,6 +33,7 @@ public class PropertySensorListenerThread implements Runnable
 		this.sensorSocket = sensorSocket;
 		this.propertyId = propertyId;
 		this.servers = servers;
+		connectionToCentral = getConnection();
 	}
 
 	@Override
@@ -48,7 +49,6 @@ public class PropertySensorListenerThread implements Runnable
 				sensorInputStream.read(sensorListenerBuffer);
 				Date currentDate = new Date();
 				Random random = new Random();
-
 				byte statusSensor=sensorListenerBuffer[0];
 
 				int sensorType = statusSensor%2; //B
@@ -80,22 +80,28 @@ public class PropertySensorListenerThread implements Runnable
 
 		while(!canSendData)
 		{
-			propertyOutputStream = getConnection();
 			//se concantena los milisegundos invertidos en la casa
 			dateEnd = new Date();
 			long milliseconds = dateEnd.getTime() - startDate.getTime();
 			modifiedLine = line+";"+milliseconds+";"+df.format(startDate)+";"+df.format(dateEnd);
 			modifiedLine += (";" + getMessageDigest(modifiedLine, df.format(dateEnd)));
-			modifiedLine = ms.encrypt(modifiedLine);			
+			modifiedLine = ms.encrypt(modifiedLine);
+			
+			if(connectionToCentral == null || (connectionToCentral != null && connectionToCentral.isClosed()))
+				connectionToCentral = getConnection();
+			
 			try 
 			{
+				propertyOutputStream = connectionToCentral.getOutputStream();	
 				propertyOutputStream.write(modifiedLine.getBytes()); 
 				System.out.println("Se envio una notificacion: "+modifiedLine);
 				canSendData = true;
 			} 
-			catch (Exception e) 
+			catch (IOException e) 
 			{
 				System.out.println("Property " + propertyId + " Couldn\'t find central server at " + this.servers.get(principalServer).getIp() + ":" + this.servers.get(principalServer).getPort());
+				connectionToCentral = null;
+				
 			}
 		}
 	}
@@ -113,10 +119,10 @@ public class PropertySensorListenerThread implements Runnable
 		return hashedBytes;
 	}
 
-	private OutputStream getConnection(){
+	private Socket getConnection(){
 
-		Socket propertyHouseSocket; 
-		OutputStream propertyOutputStream=null;
+		Socket propertyHouseSocket = null; 
+		
 
 		boolean canConnectCentral=false;
 		int numberOfServers = this.servers.size();
@@ -127,9 +133,8 @@ public class PropertySensorListenerThread implements Runnable
 			try 
 			{
 				System.out.println("Se inicia conexion con el servidor: "+server.getIp()+":"+server.getPort());
-
+				
 				propertyHouseSocket = new Socket(server.getIp(), server.getPort());
-				propertyOutputStream = propertyHouseSocket.getOutputStream();
 				canConnectCentral= true;
 			} 
 			catch (UnknownHostException e1)
@@ -141,9 +146,10 @@ public class PropertySensorListenerThread implements Runnable
 			} catch (IOException e1) {
 				principalServer ++;
 				principalServer = principalServer%numberOfServers;
+				System.out.println("fallo el servidor: "+server.getIp()+":"+server.getPort());
 				e1.printStackTrace();
 			} 
 		}
-		return propertyOutputStream;	
+		return propertyHouseSocket;	
 	}
 }
