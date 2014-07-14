@@ -25,7 +25,6 @@ public class PropertySensorListenerServer implements IStoppable
 	
 	public PropertySensorListenerServer() 
 	{		
-
 		Thread shutdownMonitor = new Thread(new ShutDownMonitor(this));
 		shutdownMonitor.setDaemon(true);
 		shutdownMonitor.start();
@@ -40,6 +39,31 @@ public class PropertySensorListenerServer implements IStoppable
 			Properties configProperties = loadProperties();
 			propertyId =  Integer.parseInt(configProperties.getProperty(KEY_HOUSE_ID));
 			initServerSocket(configProperties);
+			initCentralInfo(configProperties);
+			startListening();
+		} 
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+	}
+
+	public PropertySensorListenerServer(int listeningPort) 
+	{
+		Thread shutdownMonitor = new Thread(new ShutDownMonitor(this));
+		shutdownMonitor.setDaemon(true);
+		shutdownMonitor.start();
+		
+		/*
+		Thread timeOutShutdown = new Thread(new TimeOutShutDown(this, timeout));
+		timeOutShutdown.setDaemon(true);
+		timeOutShutdown.start();
+		 */
+		try 
+		{
+			Properties configProperties = loadProperties();
+			propertyId =  Integer.parseInt(configProperties.getProperty(KEY_HOUSE_ID));
+			initServerSocket(listeningPort);
 			initCentralInfo(configProperties);
 			startListening();
 		} 

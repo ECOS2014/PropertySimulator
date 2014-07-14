@@ -1,12 +1,17 @@
 package uniandes.propertysimulator.world;
 import javax.swing.JFrame;
 
+import uniandes.centalsimulator.reader.AdminWriter;
+
 public class PropertySimulator extends JFrame 
 {
 	private static final long serialVersionUID = 1L;
 
 	public static void main(String[] args)
 	{
+		Thread adminWriter = new Thread(new AdminWriter());
+		adminWriter.start();
+		
 		PropertySimulator ps = new PropertySimulator();
 		ps.setSize(800, 100);
 		ps.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -24,7 +29,7 @@ public class PropertySimulator extends JFrame
 			long timeout = Long.parseLong(strTimeout);
 			
 			ps.setTitle("{propertyId:" + propertyId + ", listeningPort:" + listeningPort + ", timeout:" + timeout + "}");
-			new PropertySensorListenerServer();
+			new PropertySensorListenerServer(listeningPort);
 		}
 		else
 		{

@@ -29,16 +29,12 @@ public class MessageChecker
 		String ultimateMessageToHash = DEFAULT_KEY + message;
 		byte[] hashedMessage = messageDigest.digest(ultimateMessageToHash.getBytes());
 		String base64Hash =new sun.misc.BASE64Encoder().encode(hashedMessage);
-		System.out.println("\n\nMessage: " + message);
-		System.out.println("MD5: " + base64Hash + "\n\n");
 		return base64Hash;
 	}
 	
 	public boolean checkHash(String messageHash, String message, String strKeyDate)
 	{
-		System.out.println("\ncheckHash(messageHash:"+messageHash+", message:"+message+", strKeyDate:"+strKeyDate+")");
 		String hashedMessage = getHash(message, strKeyDate);
-		System.out.println("Local hash: " + hashedMessage + "\n");
 		return hashedMessage.equals(messageHash);
 	}
 }
